@@ -1,0 +1,153 @@
+    _____  ______          _____  __  __ ______ 
+   |  __ \|  ____|   /\   |  __ \|  \/  |  ____|
+   | |__) | |__     /  \  | |  | | \  / | |__   
+   |  _  /|  __|   / /\ \ | |  | | |\/| |  __|  
+   | | \ \| |____ / ____ \| |__| | |  | | |____ 
+   |_|  \_\______/_/    \_\_____/|_|  |_|______|                                       
+
+
+  ==============================================
+  =  yaraqa  == Yara Quality Assurance Test ====
+  =                                            =
+  =  Author: Blueliv                           =
+  =  Version: 1.0                              =
+  =  http://www.blueliv.com                    =
+  =  https://github.com/Blueliv                =
+  ==============================================
+
+
+-------------
+ DEPENDENCES
+-------------
+
+It is not strictly necessary to have installed pygal. However, YaraQA will not be able to generate
+plots showing Yara Accuracy Results if it is not.
+
+    Install Pygal:
+        $ pip install pygal
+
+
+It is assumed that Cuckoo's Sandbox, and Yara are both installed. 
+
+
+-----------------
+ WHAT'S INCLUDED
+-----------------
+
+Within the download you'll find the following directories and files:
+
+    yaraqa/
+    ├──── README
+    ├──── yaraqa.py
+    ├──── yaraqa.conf
+    └──── reports/
+
+
+-------------
+  SET LAB:
+-------------
+
+    In order to launch yaraqa.py properly you must:
+
+        1. Name all yara rules to include its family name. For Alina malware family we could have
+           something like this:
+
+                rule alina_static : alina_static
+        
+        2. Name all yara files with its malware family name. For example: alina.yara, zeus.yara, etc.
+
+        3. Place all your yara rules (.yara) in a directory. It would be better to
+           group them in static yara rules and memory yara rules and place those groups
+           in different directories.
+        
+        3. As you need a couple of samples to match yara rules against, you will have to place
+           your samples in a specific directory and each sample must be in a subdirectory containing
+           its faimily name. Then, we could possibly have something like this:
+                ./samples
+                ./samples/1-zeus/sample_zeus_1
+                ./samples/zeus/sample_zeus_2
+                ./samples/b-alina/sample_alina_1
+
+
+-------------
+CONFIGURATION
+-------------
+
+In order to launch yaraqa.py successfuly, we need to fill its configuration file, yaraqa.conf.
+In this file, you’ll have to specify where to find your goodware and malware repositories,
+static and memory yara rules and the needed parameters for cuckoo.
+
+
+-------------
+  OPTIONS:
+-------------
+
+    --show
+        Will show available .yara files found and exit yaraqa.
+
+    --memory
+        Will test yara rules at memory using Cuckoo Sandbox
+
+    --static
+        Will test yara rules in static.
+
+    --all
+        Will test yara rules with both static and memory methods.
+
+    --family
+        Specifcy which yara to test.
+
+    --malware
+        Use malware repository to match yara rules against.
+
+    --goodware
+        Use goodware repository to match yara rules against.
+
+    --verbose
+        Be verbose. Yaraqa is not verbose by default.
+        
+    --nolog
+        Yaraqa will save a .log file for every family tested in reports/ folder. It is possible to tell yaraqa
+        not to save those logfiles with --nolog option.
+
+    --plot
+        If we want to render a plot showing the Yara Accuracy tested we can use the --plot option
+
+    --timeout n
+        By default, the timeout for a task analysis at cuckoo is 15 (seconds). It is possible to change it with
+        --timeout option.
+
+    --targeted
+        Analyzing at cuckoo lot of files can take too much time. It is possible to test our yara rules only
+        against the files that we expect to match (--targeted option). As in our example, alina.yara
+        would only be tested with all files stored in the directory ./samples/b-alina
+
+
+-------------
+  EXAMPLES:   
+-------------
+
+    Once all this has been done we can start testing our yara rules.
+    In order to execute the test we need to state at least wich family do we want to test.
+    This would be the default execution if no parameters are passed (except the --family one, which
+    must be set)
+
+        >python yaraqa.py --family decebal
+
+        This would execute the yaraqa testing with these arguments by default:
+
+        >python yaraqa.py --family decebal --static --memory --malware --goodware 
+
+        Which means that by default, yaraqa will test static and memory yara matching against
+        malware and goodware repositories. We could have test yaras in memory with --memory
+        or both using --all.
+
+    This is how we would test decebal.yara with both memory and static methods, against malware repositories, plotting
+    the results and without saving any logfile. In addition, we would like to test yaras only against targeted files.
+
+        >python yaraqa.py --family decebal --memory --static --malware --plot --nolog --targeted
+
+    This could have been done using:
+
+        >python yaraqa.py --family decebal --all --malware --plot --nolog --targeted
+
