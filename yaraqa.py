@@ -59,9 +59,6 @@ class YaraQA():
             self.die("--family must be set")
 
         self.family = family.lower()
-        self.show = show
-        if self.show:
-                self.show_available()
 
         self.method = method
         self.malware = malware
@@ -87,6 +84,10 @@ class YaraQA():
 
         self.config_file = config_file
         self.parse_config()
+
+        self.show = show
+        if self.show:
+                self.show_available()
 
         self.DIRECTORIES = []
         if self.malware:
@@ -163,9 +164,9 @@ class YaraQA():
         try:
             r = requests.get('http://{0}:{1}/cuckoo/status'.format(str(self.API_IP), str(self.API_PORT)))
         except requests.exceptions.RequestException as err:
-            self.die(err)
+            self.die('ERROR: could not communicate with Cuckoo API, check yaraqa.conf: {0}'.format(str(err)))
         except Exception as err:
-            self.die(err)
+            self.die('ERROR: could not communicate with Cuckoo API, check yaraqa.conf: {0}'.format(str(err)))
 
     def parse_config(self):
         '''
@@ -251,10 +252,9 @@ class YaraQA():
         print '\n--->Total Static Yaras: {0}\n'.format(str(TOTAL_FILES))
         TOTAL_FILES = 0
         print '\033[0;32m[MEMORY YARAS]\033[0m\n'
-        for root, dirs, files in os.walk(self.YARA_STATIC_DIR):
+        for root, dirs, files in os.walk(self.YARA_MEMORY_DIR):
             for file in files:
                 TOTAL_FILES = TOTAL_FILES + 1
-                current_file = os.path.join(root, file)
                 print "{}".format(file)
         print '\n--->Total Memory Yaras: {0}\n'.format(str(TOTAL_FILES))
         self.die("")
@@ -411,9 +411,9 @@ class YaraQA():
                         matched = False
                         rxp = re.compile(self.family, re.IGNORECASE)
 
-                        if report['memory']:
-                            if report['memory']['yarascan']:
-                                if report['memory']['yarascan']['data']:
+                        if 'memory' in report:
+                            if 'yarascan' in report['memory']:
+                                if 'data' in report['memory']['yarascan']:
                                     matched = any(rxp.search(yar_n['rule']) for yar_n in report['memory']['yarascan']['data'])
                                 else:
                                     if self.family in current_file:
@@ -422,8 +422,9 @@ class YaraQA():
                                 if self.family in current_file:
                                     self.logger.debug("Warning: No 'yarascan' key found in 'memory' section. file = {0}".format(str(current_file)))
                         else:
-                                if self.family in current_file:
-                                    self.logger.debug("Warning: No 'memory' key found in report data. file = {0}".format(str(current_file)))
+                            if self.family in current_file:
+                                self.logger.debug("Warning: No 'memory' key found in report data. file = {0}".format(str(current_file)))
+
 
                         if matched:
                             TOTAL_MEMORY_MATCHES = TOTAL_MEMORY_MATCHES + 1
@@ -440,7 +441,7 @@ class YaraQA():
                         else:
                             if self.family in current_file:
                                 MEMORY_MISS = MEMORY_MISS + 1
-                                self.logger.debug('\033[0;31m[MISS]\033[0m')
+                                self.logger.debug('-> MEMORY YARA \033[0;31m[MISS]\033[0m')
  
             if path == self.MALWARE_DIR:
                 self.logger.debug('\n\t_MALWARE REPO_')
